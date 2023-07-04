@@ -5,55 +5,43 @@
 #ifndef FLUTTER_PLUGIN_DRM_MANAGER_H_
 #define FLUTTER_PLUGIN_DRM_MANAGER_H_
 
-#include <player.h>
-
-#include <cstdint>
 #include <functional>
-#include <memory>
-#include <string>
-#include <vector>
 
-#include "drm_manager_service_proxy.h"
-
-typedef std::function<std::vector<uint8_t>(
-    const std::vector<uint8_t> &challenge)>
+typedef std::function<void(const void *challenge, unsigned long challenge_len,
+                           void **response, unsigned long *response_len)>
     ChallengeCallback;
 
 class DrmManager {
  public:
-  explicit DrmManager(int drm_type, const std::string &license_server_url,
-                      player_h player);
+  explicit DrmManager();
   ~DrmManager();
 
-  bool InitializeDrmSession(const std::string &url);
+  bool CreateDrmSession(int drm_type);
+  bool SetChallenge(const std::string &media_url,
+                    const std::string &license_server_url);
+  bool SetChallenge(const std::string &media_url, ChallengeCallback callback);
   void ReleaseDrmSession();
 
-  void SetChallengeCallback(ChallengeCallback callback) {
-    challenge_callback_ = callback;
-  }
+  bool GetDrmHandle(int *handle);
+  int UpdatePsshData(void *data, int length);
+  bool SecurityInitCompleteCB(int *drm_handle, unsigned int len,
+                              unsigned char *pssh_data, void *user_data);
 
  private:
-  bool CreateDrmSession();
-  bool SetPlayerDrm(const std::string &url);
-  bool SetChallengeCondition();
-
+  int SetChallenge(const std::string &media_url);
   static int OnChallengeData(void *session_id, int message_type, void *message,
                              int message_length, void *user_data);
-  static int UpdatePsshDataCB(drm_init_data_type type, void *data, int length,
-                              void *user_data);
   static void OnDrmManagerError(long error_code, char *error_message,
                                 void *user_data);
 
-  SetDataParam_t security_param_;
-  DRMSessionHandle_t drm_session_ = nullptr;
+  void *drm_session_ = nullptr;
   void *drm_manager_handle_ = nullptr;
-  void *media_player_handle_ = nullptr;
 
   int drm_type_;
   std::string license_server_url_;
-  player_h player_;
-
   ChallengeCallback challenge_callback_;
+
+  bool initialized_ = false;
 };
 
 #endif  // FLUTTER_PLUGIN_DRM_MANAGER_H_

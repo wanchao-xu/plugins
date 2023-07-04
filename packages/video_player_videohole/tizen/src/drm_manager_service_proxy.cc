@@ -11,15 +11,8 @@ FuncDMGRGetData DMGRGetData = nullptr;
 FuncDMGRCreateDRMSession DMGRCreateDRMSession = nullptr;
 FuncDMGRSecurityInitCompleteCB DMGRSecurityInitCompleteCB = nullptr;
 FuncDMGRReleaseDRMSession DMGRReleaseDRMSession = nullptr;
-FuncPlayerSetDrmHandle player_set_drm_handle = nullptr;
-FuncPlayerSetDrmInitCompleteCB player_set_drm_init_complete_cb = nullptr;
-FuncPlayerSetDrmInitDataCB player_set_drm_init_data_cb = nullptr;
 
 void* OpenDrmManager() { return dlopen("libdrmmanager.so.0", RTLD_LAZY); }
-
-void* OpenMediaPlayer() {
-  return dlopen("libcapi-media-player.so.0", RTLD_LAZY);
-}
 
 int InitDrmManager(void* handle) {
   if (!handle) {
@@ -57,36 +50,7 @@ int InitDrmManager(void* handle) {
   return DM_ERROR_NONE;
 }
 
-int InitMediaPlayer(void* handle) {
-  player_set_drm_handle = reinterpret_cast<FuncPlayerSetDrmHandle>(
-      dlsym(handle, "player_set_drm_handle"));
-  if (!player_set_drm_handle) {
-    return DM_ERROR_DL;
-  }
-
-  player_set_drm_init_complete_cb =
-      reinterpret_cast<FuncPlayerSetDrmInitCompleteCB>(
-          dlsym(handle, "player_set_drm_init_complete_cb"));
-  if (!player_set_drm_init_complete_cb) {
-    return DM_ERROR_DL;
-  }
-
-  player_set_drm_init_data_cb = reinterpret_cast<FuncPlayerSetDrmInitDataCB>(
-      dlsym(handle, "player_set_drm_init_data_cb"));
-  if (!player_set_drm_init_data_cb) {
-    return DM_ERROR_DL;
-  }
-
-  return DM_ERROR_NONE;
-}
-
 void CloseDrmManager(void* handle) {
-  if (handle) {
-    dlclose(handle);
-  }
-}
-
-void CloseMediaPlayer(void* handle) {
   if (handle) {
     dlclose(handle);
   }

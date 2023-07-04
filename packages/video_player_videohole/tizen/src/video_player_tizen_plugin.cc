@@ -17,6 +17,7 @@
 
 #include "messages.h"
 #include "video_player.h"
+#include "video_player_error.h"
 #include "video_player_options.h"
 
 namespace {
@@ -109,8 +110,6 @@ ErrorOr<PlayerMessage> VideoPlayerTizenPlugin::Create(
     return FlutterError("Operation failed",
                         "Could not get a native window handle.");
   }
-  std::unique_ptr<VideoPlayer> player =
-      std::make_unique<VideoPlayer>(plugin_registrar_, native_window);
 
   std::string uri;
   int32_t drm_type = 0;  // DRM_TYPE_NONE
@@ -146,11 +145,15 @@ ErrorOr<PlayerMessage> VideoPlayerTizenPlugin::Create(
     return FlutterError("Invalid argument", "Either asset or uri must be set.");
   }
 
-  int64_t player_id = player->Create(uri, drm_type, license_server_url);
-  if (player_id == -1) {
-    return FlutterError("Operation failed", "Failed to create a player.");
+  int64_t player_id = 0;
+  try {
+    auto player =
+        std::make_unique<VideoPlayer>(plugin_registrar_, native_window);
+    player_id = player->Create(uri, drm_type, license_server_url);
+    players_[player_id] = std::move(player);
+  } catch (const VideoPlayerError &error) {
+    return FlutterError(error.code(), error.message());
   }
-  players_[player_id] = std::move(player);
 
   PlayerMessage result(player_id);
   return result;
@@ -172,7 +175,11 @@ std::optional<FlutterError> VideoPlayerTizenPlugin::SetLooping(
   if (!player) {
     return FlutterError("Invalid argument", "Player not found.");
   }
-  player->SetLooping(msg.is_looping());
+  try {
+    player->SetLooping(msg.is_looping());
+  } catch (const VideoPlayerError &error) {
+    return FlutterError(error.code(), error.message());
+  }
 
   return std::nullopt;
 }
@@ -183,7 +190,11 @@ std::optional<FlutterError> VideoPlayerTizenPlugin::SetVolume(
   if (!player) {
     return FlutterError("Invalid argument", "Player not found.");
   }
-  player->SetVolume(msg.volume());
+  try {
+    player->SetVolume(msg.volume());
+  } catch (const VideoPlayerError &error) {
+    return FlutterError(error.code(), error.message());
+  }
 
   return std::nullopt;
 }
@@ -194,7 +205,11 @@ std::optional<FlutterError> VideoPlayerTizenPlugin::SetPlaybackSpeed(
   if (!player) {
     return FlutterError("Invalid argument", "Player not found.");
   }
-  player->SetPlaybackSpeed(msg.speed());
+  try {
+    player->SetPlaybackSpeed(msg.speed());
+  } catch (const VideoPlayerError &error) {
+    return FlutterError(error.code(), error.message());
+  }
 
   return std::nullopt;
 }
@@ -205,7 +220,11 @@ std::optional<FlutterError> VideoPlayerTizenPlugin::Play(
   if (!player) {
     return FlutterError("Invalid argument", "Player not found.");
   }
-  player->Play();
+  try {
+    player->Play();
+  } catch (const VideoPlayerError &error) {
+    return FlutterError(error.code(), error.message());
+  }
 
   return std::nullopt;
 }
@@ -216,7 +235,11 @@ std::optional<FlutterError> VideoPlayerTizenPlugin::Pause(
   if (!player) {
     return FlutterError("Invalid argument", "Player not found.");
   }
-  player->Pause();
+  try {
+    player->Pause();
+  } catch (const VideoPlayerError &error) {
+    return FlutterError(error.code(), error.message());
+  }
 
   return std::nullopt;
 }
@@ -228,7 +251,14 @@ ErrorOr<PositionMessage> VideoPlayerTizenPlugin::Position(
     return FlutterError("Invalid argument", "Player not found.");
   }
 
-  PositionMessage result(msg.player_id(), player->GetPosition());
+  int32_t position = 0;
+  try {
+    position = player->GetPosition();
+  } catch (const VideoPlayerError &error) {
+    return FlutterError(error.code(), error.message());
+  }
+
+  PositionMessage result(msg.player_id(), position);
   return result;
 }
 
@@ -240,7 +270,12 @@ void VideoPlayerTizenPlugin::SeekTo(
     result(FlutterError("Invalid argument", "Player not found."));
     return;
   }
-  player->SeekTo(msg.position(), [result]() -> void { result(std::nullopt); });
+  try {
+    player->SeekTo(msg.position(),
+                   [result]() -> void { result(std::nullopt); });
+  } catch (const VideoPlayerError &error) {
+    result(FlutterError(error.code(), error.message()));
+  }
 }
 
 std::optional<FlutterError> VideoPlayerTizenPlugin::SetDisplayGeometry(
@@ -249,7 +284,11 @@ std::optional<FlutterError> VideoPlayerTizenPlugin::SetDisplayGeometry(
   if (!player) {
     return FlutterError("Invalid argument", "Player not found.");
   }
-  player->SetDisplayRoi(msg.x(), msg.y(), msg.width(), msg.height());
+  try {
+    player->SetDisplayRoi(msg.x(), msg.y(), msg.width(), msg.height());
+  } catch (const VideoPlayerError &error) {
+    return FlutterError(error.code(), error.message());
+  }
 
   return std::nullopt;
 }
