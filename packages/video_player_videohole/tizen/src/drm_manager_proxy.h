@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef FLUTTER_PLUGIN_DRM_MANAGER_SERVICE_PROXY_H_
-#define FLUTTER_PLUGIN_DRM_MANAGER_SERVICE_PROXY_H_
+#ifndef FLUTTER_PLUGIN_DRM_MANAGER_PROXY_H_
+#define FLUTTER_PLUGIN_DRM_MANAGER_PROXY_H_
 
 typedef enum {
   DM_ERROR_NONE = 0,                /**< Success */
@@ -92,12 +92,6 @@ typedef struct SetDataParam_s {
   void* param4; /**< Parameter 4 */
 } SetDataParam_t;
 
-typedef enum {
-  DRM_TYPE_NONE,
-  DRM_TYPE_PLAYREADAY,
-  DRM_TYPE_WIDEVINECDM,
-} DRMTYPE;
-
 typedef void* DRMSessionHandle_t;
 
 typedef int (*FuncDMGRSetData)(DRMSessionHandle_t drm_session,
@@ -112,9 +106,9 @@ typedef bool (*FuncDMGRSecurityInitCompleteCB)(int* drm_handle,
                                                void* user_data);
 typedef int (*FuncDMGRReleaseDRMSession)(DRMSessionHandle_t drm_session);
 
-void* OpenDrmManager();
-int InitDrmManager(void* handle);
-void CloseDrmManager(void* handle);
+void* OpenDrmManagerProxy();
+int InitDrmManagerProxy(void* handle);
+void CloseDrmManagerProxy(void* handle);
 
 extern FuncDMGRSetData DMGRSetData;
 extern FuncDMGRGetData DMGRGetData;
@@ -122,4 +116,4 @@ extern FuncDMGRCreateDRMSession DMGRCreateDRMSession;
 extern FuncDMGRSecurityInitCompleteCB DMGRSecurityInitCompleteCB;
 extern FuncDMGRReleaseDRMSession DMGRReleaseDRMSession;
 
-#endif  // FLUTTER_PLUGIN_DRM_MANAGER_SERVICE_PROXY_H_
+#endif  // FLUTTER_PLUGIN_DRM_MANAGER_PROXY_H_

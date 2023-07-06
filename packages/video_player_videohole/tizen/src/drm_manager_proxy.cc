@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "drm_manager_service_proxy.h"
+#include "drm_manager_proxy.h"
 
 #include <dlfcn.h>
 
@@ -12,9 +12,9 @@ FuncDMGRCreateDRMSession DMGRCreateDRMSession = nullptr;
 FuncDMGRSecurityInitCompleteCB DMGRSecurityInitCompleteCB = nullptr;
 FuncDMGRReleaseDRMSession DMGRReleaseDRMSession = nullptr;
 
-void* OpenDrmManager() { return dlopen("libdrmmanager.so.0", RTLD_LAZY); }
+void* OpenDrmManagerProxy() { return dlopen("libdrmmanager.so.0", RTLD_LAZY); }
 
-int InitDrmManager(void* handle) {
+int InitDrmManagerProxy(void* handle) {
   if (!handle) {
     return DM_ERROR_INVALID_PARAM;
   }
@@ -50,7 +50,7 @@ int InitDrmManager(void* handle) {
   return DM_ERROR_NONE;
 }
 
-void CloseDrmManager(void* handle) {
+void CloseDrmManagerProxy(void* handle) {
   if (handle) {
     dlclose(handle);
   }

@@ -15,8 +15,8 @@
 #include <string>
 #include <variant>
 
+#include "media_player.h"
 #include "messages.h"
-#include "video_player.h"
 #include "video_player_error.h"
 #include "video_player_options.h"
 
@@ -148,7 +148,7 @@ ErrorOr<PlayerMessage> VideoPlayerTizenPlugin::Create(
   int64_t player_id = 0;
   try {
     auto player =
-        std::make_unique<VideoPlayer>(plugin_registrar_, native_window);
+        std::make_unique<MediaPlayer>(plugin_registrar_, native_window);
     player_id = player->Create(uri, drm_type, license_server_url);
     players_[player_id] = std::move(player);
   } catch (const VideoPlayerError &error) {

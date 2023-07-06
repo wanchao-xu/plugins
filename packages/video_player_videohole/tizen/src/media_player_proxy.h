@@ -1,9 +1,9 @@
-// Copyright 2022 Samsung Electronics Co., Ltd. All rights reserved.
+// Copyright 2023 Samsung Electronics Co., Ltd. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef FLUTTER_PLUGIN_PRIVATE_MEDIA_PLAYER_H_
-#define FLUTTER_PLUGIN_PRIVATE_MEDIA_PLAYER_H_
+#ifndef FLUTTER_PLUGIN_MEDIA_PLAYER_PROXY_H_
+#define FLUTTER_PLUGIN_MEDIA_PLAYER_PROXY_H_
 
 #include <player.h>
 
@@ -52,13 +52,13 @@ typedef int (*FuncPlayerSetDrmInitDataCB)(player_h player,
                                           set_drm_init_data_cb callback,
                                           void* user_data);
 
-void* OpenMediaPlayer();
-bool InitMediaPlayer(void* handle);
-void CloseMediaPlayer(void* handle);
+void* OpenMediaPlayerProxy();
+bool InitMediaPlayerProxy(void* handle);
+void CloseMediaPlayerProxy(void* handle);
 
 extern FuncPlayerSetEcoreWlDisplay player_set_ecore_wl_display;
 extern FuncPlayerSetDrmHandle player_set_drm_handle;
 extern FuncPlayerSetDrmInitCompleteCB player_set_drm_init_complete_cb;
 extern FuncPlayerSetDrmInitDataCB player_set_drm_init_data_cb;
 
-#endif  // FLUTTER_PLUGIN_PRIVATE_MEDIA_PLAYER_H_
+#endif  // FLUTTER_PLUGIN_MEDIA_PLAYER_PROXY_H_

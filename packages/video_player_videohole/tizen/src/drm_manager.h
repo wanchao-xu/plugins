@@ -7,12 +7,18 @@
 
 #include <functional>
 
-typedef std::function<void(const void *challenge, unsigned long challenge_len,
-                           void **response, unsigned long *response_len)>
-    ChallengeCallback;
-
 class DrmManager {
  public:
+  typedef enum {
+    DRM_TYPE_NONE,
+    DRM_TYPE_PLAYREADAY,
+    DRM_TYPE_WIDEVINECDM,
+  } DrmType;
+
+  using ChallengeCallback =
+      std::function<void(const void *challenge, unsigned long challenge_len,
+                         void **response, unsigned long *response_len)>;
+
   explicit DrmManager();
   ~DrmManager();
 
@@ -35,7 +41,7 @@ class DrmManager {
                                 void *user_data);
 
   void *drm_session_ = nullptr;
-  void *drm_manager_handle_ = nullptr;
+  void *drm_manager_proxy_ = nullptr;
 
   int drm_type_;
   std::string license_server_url_;

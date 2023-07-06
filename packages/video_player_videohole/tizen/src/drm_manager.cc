@@ -5,28 +5,28 @@
 #include "drm_manager.h"
 
 #include "drm_license_helper.h"
-#include "drm_manager_service_proxy.h"
+#include "drm_manager_proxy.h"
 #include "log.h"
 
 static std::string GetDrmSubType(int drm_type) {
   switch (drm_type) {
-    case DRM_TYPE_PLAYREADAY:
+    case DrmManager::DRM_TYPE_PLAYREADAY:
       return "com.microsoft.playready";
-    case DRM_TYPE_WIDEVINECDM:
+    case DrmManager::DRM_TYPE_WIDEVINECDM:
     default:
       return "com.widevine.alpha";
   }
 }
 
 DrmManager::DrmManager() : drm_type_(DM_TYPE_NONE) {
-  drm_manager_handle_ = OpenDrmManager();
-  if (drm_manager_handle_) {
-    int ret = InitDrmManager(drm_manager_handle_);
+  drm_manager_proxy_ = OpenDrmManagerProxy();
+  if (drm_manager_proxy_) {
+    int ret = InitDrmManagerProxy(drm_manager_proxy_);
     if (ret != DM_ERROR_NONE) {
       LOG_ERROR("[DrmManager] Failed to initialize DRM manager: %s",
                 get_error_message(ret));
-      CloseDrmManager(drm_manager_handle_);
-      drm_manager_handle_ = nullptr;
+      CloseDrmManagerProxy(drm_manager_proxy_);
+      drm_manager_proxy_ = nullptr;
     }
   } else {
     LOG_ERROR("[DrmManager] Failed to dlopen libdrmmanager.");
@@ -37,14 +37,14 @@ DrmManager::~DrmManager() {
   ReleaseDrmSession();
 
   // Close dlopen handles.
-  if (drm_manager_handle_) {
-    CloseDrmManager(drm_manager_handle_);
-    drm_manager_handle_ = nullptr;
+  if (drm_manager_proxy_) {
+    CloseDrmManagerProxy(drm_manager_proxy_);
+    drm_manager_proxy_ = nullptr;
   }
 }
 
 bool DrmManager::CreateDrmSession(int drm_type) {
-  if (!drm_manager_handle_) {
+  if (!drm_manager_proxy_) {
     LOG_ERROR("[DrmManager] Invalid drm manager.");
     return false;
   }
