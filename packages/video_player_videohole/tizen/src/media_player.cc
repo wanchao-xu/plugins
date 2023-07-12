@@ -259,7 +259,6 @@ int32_t MediaPlayer::GetPosition() {
     throw VideoPlayerError("player_get_play_position failed",
                            get_error_message(ret));
   }
-  LOG_INFO("Video playing time: %d", position);
   return position;
 }
 
@@ -348,7 +347,7 @@ void MediaPlayer::SetDisplay() {
 void MediaPlayer::SetDrm(const std::string &uri, int drm_type,
                          const std::string &license_server_url) {
   drm_manager_ = std::make_unique<DrmManager>();
-  if (!drm_manager_->CreateDrmSession(drm_type)) {
+  if (!drm_manager_->CreateDrmSession(drm_type, false)) {
     throw VideoPlayerError("Drm error", "Failed to create drm session");
   }
 
@@ -391,68 +390,70 @@ void MediaPlayer::SetDrm(const std::string &uri, int drm_type,
   }
 }
 
-void MediaPlayer::OnSubtitleUpdated(unsigned long duration, char *text,
-                                    void *user_data) {
-  LOG_INFO("Subtitle updated, duration: %ld, text: %s", duration, text);
-
-  MediaPlayer *player = static_cast<MediaPlayer *>(user_data);
-  player->SendSubtitleUpdate(duration, std::string(text));
-}
-
 void MediaPlayer::OnPrepared(void *user_data) {
   LOG_INFO("Media player prepared.");
 
-  MediaPlayer *player = static_cast<MediaPlayer *>(user_data);
-  player->SendInitialized();
+  MediaPlayer *self = static_cast<MediaPlayer *>(user_data);
+  if (!self->is_initialized_) {
+    self->SendInitialized();
+  }
 }
 
 void MediaPlayer::OnBuffering(int percent, void *user_data) {
   LOG_INFO("Buffering percent: %d", percent);
 
-  MediaPlayer *player = static_cast<MediaPlayer *>(user_data);
+  MediaPlayer *self = static_cast<MediaPlayer *>(user_data);
   if (percent == 100) {
-    player->SendBufferingEnd();
-    player->is_buffering_ = false;
-  } else if (!player->is_buffering_ && percent <= 5) {
-    player->SendBufferingStart();
-    player->is_buffering_ = true;
+    self->SendBufferingEnd();
+    self->is_buffering_ = false;
+  } else if (!self->is_buffering_ && percent <= 5) {
+    self->SendBufferingStart();
+    self->is_buffering_ = true;
   } else {
-    player->SendBufferingUpdate(percent);
+    self->SendBufferingUpdate(percent);
   }
 }
 
 void MediaPlayer::OnSeekCompleted(void *user_data) {
   LOG_INFO("Seek completed.");
 
-  MediaPlayer *player = static_cast<MediaPlayer *>(user_data);
-  if (player->on_seek_completed_) {
-    player->on_seek_completed_();
-    player->on_seek_completed_ = nullptr;
+  MediaPlayer *self = static_cast<MediaPlayer *>(user_data);
+  if (self->on_seek_completed_) {
+    self->on_seek_completed_();
+    self->on_seek_completed_ = nullptr;
   }
 }
 
 void MediaPlayer::OnPlayCompleted(void *user_data) {
   LOG_INFO("Play completed.");
 
-  MediaPlayer *player = static_cast<MediaPlayer *>(user_data);
-  player->SendPlayCompleted();
-  player->Pause();
+  MediaPlayer *self = static_cast<MediaPlayer *>(user_data);
+  self->SendPlayCompleted();
+  self->Pause();
 }
 
 void MediaPlayer::OnInterrupted(player_interrupted_code_e code,
                                 void *user_data) {
   LOG_ERROR("Interrupt code: %d", code);
 
-  MediaPlayer *player = static_cast<MediaPlayer *>(user_data);
-  player->SendError("Interrupted error", "Media player has been interrupted.");
+  MediaPlayer *self = static_cast<MediaPlayer *>(user_data);
+  self->SendError("Interrupted error", "Media player has been interrupted.");
 }
 
 void MediaPlayer::OnError(int error_code, void *user_data) {
   LOG_ERROR("An error occurred for media player, error: %d (%s)", error_code,
             get_error_message(error_code));
 
-  MediaPlayer *player = static_cast<MediaPlayer *>(user_data);
-  player->SendError("Media Player error", get_error_message(error_code));
+  MediaPlayer *self = static_cast<MediaPlayer *>(user_data);
+  self->SendError("Media Player error", get_error_message(error_code));
+}
+
+void MediaPlayer::OnSubtitleUpdated(unsigned long duration, char *text,
+                                    void *user_data) {
+  LOG_INFO("Subtitle updated, duration: %ld, text: %s", duration, text);
+
+  MediaPlayer *self = static_cast<MediaPlayer *>(user_data);
+  self->SendSubtitleUpdate(duration, std::string(text));
 }
 
 bool MediaPlayer::OnDrmSecurityInitComplete(int *drm_handle,
@@ -461,10 +462,10 @@ bool MediaPlayer::OnDrmSecurityInitComplete(int *drm_handle,
                                             void *user_data) {
   LOG_INFO("Drm init completed.");
 
-  MediaPlayer *player = static_cast<MediaPlayer *>(user_data);
-  if (player->drm_manager_) {
-    return player->drm_manager_->SecurityInitCompleteCB(
-        drm_handle, length, pssh_data, player->player_);
+  MediaPlayer *self = static_cast<MediaPlayer *>(user_data);
+  if (self->drm_manager_) {
+    return self->drm_manager_->SecurityInitCompleteCB(drm_handle, length,
+                                                      pssh_data, self->player_);
   }
   return false;
 }
@@ -473,9 +474,9 @@ int MediaPlayer::OnDrmUpdatePsshData(drm_init_data_type init_type, void *data,
                                      int data_length, void *user_data) {
   LOG_INFO("Drm update pssh data.");
 
-  MediaPlayer *player = static_cast<MediaPlayer *>(user_data);
-  if (player->drm_manager_) {
-    return player->drm_manager_->UpdatePsshData(data, data_length);
+  MediaPlayer *self = static_cast<MediaPlayer *>(user_data);
+  if (self->drm_manager_) {
+    return self->drm_manager_->UpdatePsshData(data, data_length);
   }
   return 0;
 }

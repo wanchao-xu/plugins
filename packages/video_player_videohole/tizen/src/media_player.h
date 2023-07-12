@@ -59,9 +59,7 @@ class MediaPlayer : public VideoPlayer {
   void *native_window_;
   int64_t player_id_ = -1;
   std::unique_ptr<DrmManager> drm_manager_;
-
   bool is_buffering_ = false;
-
   SeekCompletedCallback on_seek_completed_;
 };
 

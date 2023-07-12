@@ -8,6 +8,7 @@
 
 FuncDMGRSetData DMGRSetData = nullptr;
 FuncDMGRGetData DMGRGetData = nullptr;
+FuncDMGRSetDRMLocalMode DMGRSetDRMLocalMode = nullptr;
 FuncDMGRCreateDRMSession DMGRCreateDRMSession = nullptr;
 FuncDMGRSecurityInitCompleteCB DMGRSecurityInitCompleteCB = nullptr;
 FuncDMGRReleaseDRMSession DMGRReleaseDRMSession = nullptr;
@@ -26,6 +27,12 @@ int InitDrmManagerProxy(void* handle) {
 
   DMGRGetData = reinterpret_cast<FuncDMGRGetData>(dlsym(handle, "DMGRGetData"));
   if (!DMGRGetData) {
+    return DM_ERROR_DL;
+  }
+
+  DMGRSetDRMLocalMode = reinterpret_cast<FuncDMGRSetDRMLocalMode>(
+      dlsym(handle, "DMGRSetDRMLocalMode"));
+  if (!DMGRSetDRMLocalMode) {
     return DM_ERROR_DL;
   }
 

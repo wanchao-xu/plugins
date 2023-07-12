@@ -5,7 +5,11 @@
 #ifndef FLUTTER_PLUGIN_DRM_MANAGER_H_
 #define FLUTTER_PLUGIN_DRM_MANAGER_H_
 
+#include <glib.h>
+
 #include <functional>
+
+#include "drm_manager_proxy.h"
 
 class DrmManager {
  public:
@@ -22,14 +26,14 @@ class DrmManager {
   explicit DrmManager();
   ~DrmManager();
 
-  bool CreateDrmSession(int drm_type);
+  bool CreateDrmSession(int drm_type, bool local_mode);
   bool SetChallenge(const std::string &media_url,
                     const std::string &license_server_url);
   bool SetChallenge(const std::string &media_url, ChallengeCallback callback);
   void ReleaseDrmSession();
 
   bool GetDrmHandle(int *handle);
-  int UpdatePsshData(void *data, int length);
+  int UpdatePsshData(const void *data, int length);
   bool SecurityInitCompleteCB(int *drm_handle, unsigned int len,
                               unsigned char *pssh_data, void *user_data);
 
@@ -39,14 +43,15 @@ class DrmManager {
                              int message_length, void *user_data);
   static void OnDrmManagerError(long error_code, char *error_message,
                                 void *user_data);
+  static gboolean InstallEMEKey(void *user_data);
 
   void *drm_session_ = nullptr;
   void *drm_manager_proxy_ = nullptr;
-
   int drm_type_;
   std::string license_server_url_;
   ChallengeCallback challenge_callback_;
-
+  SetDataParam_t license_param_;
+  unsigned int source_id_ = 0;
   bool initialized_ = false;
 };
 

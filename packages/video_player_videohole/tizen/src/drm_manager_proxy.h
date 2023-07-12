@@ -98,6 +98,7 @@ typedef int (*FuncDMGRSetData)(DRMSessionHandle_t drm_session,
                                const char* data_type, void* input_data);
 typedef int (*FuncDMGRGetData)(DRMSessionHandle_t drm_session,
                                const char* data_type, void* output_data);
+typedef void (*FuncDMGRSetDRMLocalMode)();
 typedef DRMSessionHandle_t (*FuncDMGRCreateDRMSession)(
     dm_type_e type, const char* drm_sub_type);
 typedef bool (*FuncDMGRSecurityInitCompleteCB)(int* drm_handle,
@@ -112,6 +113,7 @@ void CloseDrmManagerProxy(void* handle);
 
 extern FuncDMGRSetData DMGRSetData;
 extern FuncDMGRGetData DMGRGetData;
+extern FuncDMGRSetDRMLocalMode DMGRSetDRMLocalMode;
 extern FuncDMGRCreateDRMSession DMGRCreateDRMSession;
 extern FuncDMGRSecurityInitCompleteCB DMGRSecurityInitCompleteCB;
 extern FuncDMGRReleaseDRMSession DMGRReleaseDRMSession;
