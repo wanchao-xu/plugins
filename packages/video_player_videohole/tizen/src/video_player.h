@@ -39,6 +39,7 @@ class VideoPlayer {
   void RegisterSendPort(Dart_Port send_port) { send_port_ = send_port; }
 
  protected:
+  int64_t GeneratePlayerID();
   void SetUpEventChannel(int32_t player_id,
                          flutter::BinaryMessenger *messenger);
   void SendInitialized();

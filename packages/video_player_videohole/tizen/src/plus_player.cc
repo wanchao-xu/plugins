@@ -12,8 +12,6 @@
 #include "log.h"
 #include "video_player_error.h"
 
-static int64_t player_index = 1;
-
 PlusPlayer::PlusPlayer(flutter::PluginRegistrar *plugin_registrar,
                        void *native_window)
     : plugin_registrar_(plugin_registrar), native_window_(native_window) {}
@@ -65,10 +63,10 @@ int64_t PlusPlayer::Create(const std::string &uri, int drm_type,
                            "PlusPlayer failed to prepare async");
   }
 
-  player_id_ = player_index++;
-  SetUpEventChannel(player_id_, plugin_registrar_->messenger());
+  int64_t id = GeneratePlayerID();
+  SetUpEventChannel(id, plugin_registrar_->messenger());
 
-  return player_id_;
+  return id;
 }
 
 void PlusPlayer::Dispose() {

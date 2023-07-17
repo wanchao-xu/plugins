@@ -12,8 +12,6 @@
 typedef void (*FuncEcoreWl2WindowGeometryGet)(void *window, int *x, int *y,
                                               int *width, int *height);
 
-static int64_t player_index = 1;
-
 static std::string RotationToString(player_display_rotation_e rotation) {
   switch (rotation) {
     case PLAYER_DISPLAY_ROTATION_NONE:
@@ -135,10 +133,10 @@ int64_t MediaPlayer::Create(const std::string &uri, int drm_type,
                            get_error_message(ret));
   }
 
-  player_id_ = player_index++;
-  SetUpEventChannel(player_id_, plugin_registrar_->messenger());
+  int64_t id = GeneratePlayerID();
+  SetUpEventChannel(id, plugin_registrar_->messenger());
 
-  return player_id_;
+  return id;
 }
 
 void MediaPlayer::Dispose() {

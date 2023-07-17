@@ -11,12 +11,16 @@
 #include "pending_call.h"
 #include "video_player_error.h"
 
+static int64_t player_index = 1;
+
 VideoPlayer::~VideoPlayer() {
   event_sink_ = nullptr;
   if (event_channel_) {
     event_channel_->SetStreamHandler(nullptr);
   }
 }
+
+int64_t VideoPlayer::GeneratePlayerID() { return player_index++; }
 
 void VideoPlayer::SetUpEventChannel(int32_t player_id,
                                     flutter::BinaryMessenger *messenger) {
