@@ -33,20 +33,81 @@ class _App extends StatelessWidget {
             isScrollable: true,
             tabs: <Widget>[
               Tab(icon: Icon(Icons.cloud), text: 'MP4'),
-              Tab(icon: Icon(Icons.cloud), text: 'HLS'),
-              Tab(icon: Icon(Icons.cloud), text: 'Dash'),
-              Tab(icon: Icon(Icons.cloud), text: 'DRM Widevine'),
-              Tab(icon: Icon(Icons.cloud), text: 'DRM PlayReady'),
+              Tab(icon: Icon(Icons.cloud), text: 'HLS 2.4'),
+              Tab(icon: Icon(Icons.cloud), text: 'HLS cenc 2.4'),
+              Tab(icon: Icon(Icons.cloud), text: 'HLS cbcs 2.4'),
+              Tab(icon: Icon(Icons.cloud), text: 'HLS 2.5'),
+              Tab(icon: Icon(Icons.cloud), text: 'HLS cenc 2.5'),
+              Tab(icon: Icon(Icons.cloud), text: 'HLS cbcs 2.5'),
+              Tab(icon: Icon(Icons.cloud), text: 'HLS 2.6'),
+              Tab(icon: Icon(Icons.cloud), text: 'HLS cenc 2.6'),
+              Tab(icon: Icon(Icons.cloud), text: 'HLS cbcs 2.6'),
             ],
           ),
         ),
-        body: TabBarView(
+        body: const TabBarView(
           children: <Widget>[
-            _Mp4RemoteVideo(),
-            _HlsRomoteVideo(),
-            _DashRomoteVideo(),
-            _DrmRemoteVideo(),
-            _DrmRemoteVideo2(),
+            _NetworkVideo(
+              title: 'With remote mp4',
+              url: 'https://media.w3.org/2010/05/bunny/trailer.mp4',
+            ),
+            _NetworkVideo(
+              title: 'With bbb_none_2.4.1.m3u8',
+              url:
+                  'https://devel.uniqcast.com/wv/samples/bbb_none_2.4.1/bbb_none_2.4.1.m3u8',
+            ),
+            _NetworkVideo(
+              title: 'With bbb_cenc_2.4.1.m3u8',
+              drmType: DrmType.widevine,
+              url:
+                  'https://devel.uniqcast.com/wv/samples/bbb_cenc_2.4.1/bbb_cenc_2.4.1.m3u8',
+              license: 'https://proxy.uat.widevine.com/proxy',
+            ),
+            _NetworkVideo(
+              title: 'With bbb_cbcs_2.4.1.m3u8',
+              drmType: DrmType.widevine,
+              url:
+                  'https://devel.uniqcast.com/wv/samples/bbb_cbcs_2.4.1/bbb_cbcs_2.4.1.m3u8',
+              license: 'https://proxy.uat.widevine.com/proxy',
+            ),
+            _NetworkVideo(
+              title: 'With bbb_none_2.5.1.m3u8',
+              url:
+                  'https://devel.uniqcast.com/wv/samples/bbb_none_2.5.1/bbb_none_2.5.1.m3u8',
+            ),
+            _NetworkVideo(
+              title: 'With bbb_cenc_2.5.1.m3u8',
+              drmType: DrmType.widevine,
+              url:
+                  'https://devel.uniqcast.com/wv/samples/bbb_cenc_2.5.1/bbb_cenc_2.5.1.m3u8',
+              license: 'https://proxy.uat.widevine.com/proxy',
+            ),
+            _NetworkVideo(
+              title: 'With bbb_cbcs_2.5.1.m3u8',
+              drmType: DrmType.widevine,
+              url:
+                  'https://devel.uniqcast.com/wv/samples/bbb_cbcs_2.5.1/bbb_cbcs_2.5.1.m3u8',
+              license: 'https://proxy.uat.widevine.com/proxy',
+            ),
+            _NetworkVideo(
+              title: 'With bbb_none_2.6.1.m3u8',
+              url:
+                  'https://devel.uniqcast.com/wv/samples/bbb_none_2.6.1/bbb_none_2.6.1.m3u8',
+            ),
+            _NetworkVideo(
+              title: 'With bbb_cenc_2.6.1.m3u8',
+              drmType: DrmType.widevine,
+              url:
+                  'https://devel.uniqcast.com/wv/samples/bbb_cenc_2.6.1/bbb_cenc_2.6.1.m3u8',
+              license: 'https://proxy.uat.widevine.com/proxy',
+            ),
+            _NetworkVideo(
+              title: 'With bbb_cbcs_2.6.1.m3u8',
+              drmType: DrmType.widevine,
+              url:
+                  'https://devel.uniqcast.com/wv/samples/bbb_cbcs_2.6.1/bbb_cbcs_2.6.1.m3u8',
+              license: 'https://proxy.uat.widevine.com/proxy',
+            ),
           ],
         ),
       ),
@@ -54,19 +115,60 @@ class _App extends StatelessWidget {
   }
 }
 
-class _HlsRomoteVideo extends StatefulWidget {
+class _NetworkVideo extends StatefulWidget {
+  const _NetworkVideo({
+    Key? key,
+    this.title = '',
+    this.drmType = DrmType.none,
+    required this.url,
+    this.license = '',
+    this.useLicenseCallback = false,
+  }) : super(key: key);
+
+  final String title;
+  final DrmType drmType;
+  final String url;
+  final String license;
+  final bool useLicenseCallback;
+
   @override
-  State<_HlsRomoteVideo> createState() => _HlsRomoteVideoState();
+  State<_NetworkVideo> createState() => _NetworkVideoState();
 }
 
-class _HlsRomoteVideoState extends State<_HlsRomoteVideo> {
+class _NetworkVideoState extends State<_NetworkVideo> {
   late VideoPlayerController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.network(
-        'https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8');
+
+    if (widget.drmType != DrmType.none) {
+      late DrmConfigs configs;
+      if (widget.useLicenseCallback) {
+        configs = DrmConfigs(
+          type: widget.drmType,
+          licenseCallback: (Uint8List challenge) async {
+            final http.Response response = await http.post(
+              Uri.parse(widget.license),
+              body: challenge,
+            );
+            return response.bodyBytes;
+          },
+        );
+      } else {
+        configs = DrmConfigs(
+          type: widget.drmType,
+          licenseServerUrl: widget.license,
+        );
+      }
+
+      _controller = VideoPlayerController.network(
+        widget.url,
+        drmConfigs: configs,
+      );
+    } else {
+      _controller = VideoPlayerController.network(widget.url);
+    }
 
     _controller.addListener(() {
       if (_controller.value.hasError) {
@@ -74,68 +176,6 @@ class _HlsRomoteVideoState extends State<_HlsRomoteVideo> {
       }
       setState(() {});
     });
-    _controller.setLooping(true);
-    _controller.initialize().then((_) => setState(() {}));
-    _controller.play();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: <Widget>[
-          Container(
-            padding: const EdgeInsets.only(top: 20.0),
-          ),
-          const Text('With Hls'),
-          Container(
-            padding: const EdgeInsets.all(20),
-            child: AspectRatio(
-              aspectRatio: _controller.value.aspectRatio,
-              child: Stack(
-                alignment: Alignment.bottomCenter,
-                children: <Widget>[
-                  VideoPlayer(_controller),
-                  ClosedCaption(text: _controller.value.caption.text),
-                  _ControlsOverlay(controller: _controller),
-                  VideoProgressIndicator(_controller, allowScrubbing: true),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DashRomoteVideo extends StatefulWidget {
-  @override
-  State<_DashRomoteVideo> createState() => _DashRomoteVideoState();
-}
-
-class _DashRomoteVideoState extends State<_DashRomoteVideo> {
-  late VideoPlayerController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = VideoPlayerController.network(
-        'https://dash.akamaized.net/dash264/TestCasesUHD/2b/11/MultiRate.mpd');
-
-    _controller.addListener(() {
-      if (_controller.value.hasError) {
-        print(_controller.value.errorDescription);
-      }
-      setState(() {});
-    });
-    _controller.setLooping(true);
     _controller.initialize().then((_) => setState(() {}));
     _controller.play();
   }
@@ -152,203 +192,7 @@ class _DashRomoteVideoState extends State<_DashRomoteVideo> {
       child: Column(
         children: <Widget>[
           Container(padding: const EdgeInsets.only(top: 20.0)),
-          const Text('With Dash'),
-          Container(
-            padding: const EdgeInsets.all(20),
-            child: AspectRatio(
-              aspectRatio: _controller.value.aspectRatio,
-              child: Stack(
-                alignment: Alignment.bottomCenter,
-                children: <Widget>[
-                  VideoPlayer(_controller),
-                  ClosedCaption(text: _controller.value.caption.text),
-                  _ControlsOverlay(controller: _controller),
-                  VideoProgressIndicator(_controller, allowScrubbing: true),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Mp4RemoteVideo extends StatefulWidget {
-  @override
-  State<_Mp4RemoteVideo> createState() => _Mp4RemoteVideoState();
-}
-
-class _Mp4RemoteVideoState extends State<_Mp4RemoteVideo> {
-  late VideoPlayerController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = VideoPlayerController.network(
-        'https://media.w3.org/2010/05/bunny/trailer.mp4');
-
-    _controller.addListener(() {
-      if (_controller.value.hasError) {
-        print(_controller.value.errorDescription);
-      }
-      setState(() {});
-    });
-    _controller.setLooping(true);
-    _controller.initialize().then((_) => setState(() {}));
-    _controller.play();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: <Widget>[
-          Container(padding: const EdgeInsets.only(top: 20.0)),
-          const Text('With remote mp4'),
-          Container(
-            padding: const EdgeInsets.all(20),
-            child: AspectRatio(
-              aspectRatio: _controller.value.aspectRatio,
-              child: Stack(
-                alignment: Alignment.bottomCenter,
-                children: <Widget>[
-                  VideoPlayer(_controller),
-                  ClosedCaption(text: _controller.value.caption.text),
-                  _ControlsOverlay(controller: _controller),
-                  VideoProgressIndicator(_controller, allowScrubbing: true),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DrmRemoteVideo extends StatefulWidget {
-  @override
-  State<_DrmRemoteVideo> createState() => _DrmRemoteVideoState();
-}
-
-class _DrmRemoteVideoState extends State<_DrmRemoteVideo> {
-  late VideoPlayerController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _controller = VideoPlayerController.network(
-      'https://storage.googleapis.com/wvmedia/cenc/hevc/tears/tears.mpd',
-      drmConfigs: DrmConfigs(
-        type: DrmType.widevine,
-        licenseCallback: (Uint8List challenge) async {
-          final http.Response response = await http.post(
-            Uri.parse('https://proxy.uat.widevine.com/proxy'),
-            body: challenge,
-          );
-          return response.bodyBytes;
-        },
-      ),
-    );
-
-    _controller.addListener(() {
-      if (_controller.value.hasError) {
-        print(_controller.value.errorDescription);
-      }
-      setState(() {});
-    });
-    _controller.setLooping(true);
-    _controller.initialize().then((_) => setState(() {}));
-    _controller.play();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: <Widget>[
-          Container(padding: const EdgeInsets.only(top: 20.0)),
-          const Text('Play DRM Widevine'),
-          Container(
-            padding: const EdgeInsets.all(20),
-            child: AspectRatio(
-              aspectRatio: _controller.value.aspectRatio,
-              child: Stack(
-                alignment: Alignment.bottomCenter,
-                children: <Widget>[
-                  VideoPlayer(_controller),
-                  ClosedCaption(text: _controller.value.caption.text),
-                  _ControlsOverlay(controller: _controller),
-                  VideoProgressIndicator(_controller, allowScrubbing: true),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DrmRemoteVideo2 extends StatefulWidget {
-  @override
-  State<_DrmRemoteVideo2> createState() => _DrmRemoteVideoState2();
-}
-
-class _DrmRemoteVideoState2 extends State<_DrmRemoteVideo2> {
-  late VideoPlayerController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _controller = VideoPlayerController.network(
-      'https://test.playready.microsoft.com/smoothstreaming/SSWSS720H264PR/SuperSpeedway_720.ism/Manifest',
-      drmConfigs: const DrmConfigs(
-        type: DrmType.playready,
-        licenseServerUrl:
-            'http://test.playready.microsoft.com/service/rightsmanager.asmx',
-      ),
-    );
-
-    _controller.addListener(() {
-      if (_controller.value.hasError) {
-        print(_controller.value.errorDescription);
-      }
-      setState(() {});
-    });
-    _controller.setLooping(true);
-    _controller.initialize().then((_) => setState(() {}));
-    _controller.play();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: <Widget>[
-          Container(padding: const EdgeInsets.only(top: 20.0)),
-          const Text('Play DRM PlayReady'),
+          if (widget.title.isNotEmpty) Text(widget.title),
           Container(
             padding: const EdgeInsets.all(20),
             child: AspectRatio(
